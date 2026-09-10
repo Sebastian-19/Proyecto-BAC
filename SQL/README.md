@@ -1,7 +1,26 @@
--- 01. Limpieza y transformaci髇
+## Proceso de preparaci贸n y modelado de datos
+
+Esta secci贸n presenta una selecci贸n de consultas SQL desarrolladas durante el proceso de preparaci贸n de los datos para su posterior an谩lisis y visualizaci贸n en Power BI.
+
+Para documentar el trabajo, se seleccionaron **4 consultas representativas de cada una de las principales etapas del proceso**, priorizando aquellas que reflejan decisiones relevantes y situaciones encontradas durante el an谩lisis de los datos.
+
+El proceso se organiza en cuatro etapas:
+
+* **Limpieza y transformaci贸n:** tratamiento de inconsistencias, adecuaci贸n de formatos y preparaci贸n de los datos para su an谩lisis.
+* **Exploraci贸n:** an谩lisis de los datos para comprender su estructura, identificar patrones y detectar posibles problemas de calidad.
+* **Validaci贸n:** aplicaci贸n de controles para verificar la integridad, consistencia y confiabilidad de los datos procesados.
+* **Modelado:** estructuraci贸n de los datos mediante la creaci贸n y organizaci贸n de tablas orientadas al an谩lisis, buscando reducir redundancias y facilitar su utilizaci贸n en el modelo dimensional.
+
+La selecci贸n de consultas busca mostrar tanto el **uso t茅cnico de SQL Server** como el **razonamiento anal铆tico aplicado a los datos**: identificar un problema, investigarlo, validar los resultados y tomar decisiones para construir un conjunto de datos confiable y adecuado para el an谩lisis.
+
+Este proceso constituye la base sobre la cual se desarrolla posteriormente el modelo y el dashboard en Power BI.
 
 
--- Elimino los caracteres numericos y los guiones a los valores de mi columna [descripcion_limpia]
+
+### 01. Limpieza y transformaci贸n
+
+```sql
+ Elimino los caracteres numericos y los guiones a los valores de mi columna [descripcion_limpia]
 	while exists(
 			select 1
 			from LIC
@@ -19,13 +38,13 @@
 		)
 		where PATINDEX('%[0-9-]%', descripcion_limpia) > 0;
 	END;
+```
 
+### 02. Exploracion
 
--- 02. Exploracion
-
--- creamos una vista para visualizar que grado porcentual de incidencia tienen las categorias en las brechas presupuestarias
+Creamos una vista para visualizar que grado porcentual de incidencia tienen las categorias en las brechas presupuestarias
+```sql
 create view incidencia_en_brecha_por_categoria as 
-
 	with brecha_p as(
 	select
 		id_proc_compra
@@ -47,7 +66,7 @@ create view incidencia_en_brecha_por_categoria as
 	left join LIC
 		on b.id_proc_compra = lic.id_proc_compra
 	group by categoria_det
-	) -- agrupo los procesos de compra con brecha presupuestaria alta seg鷑 la categor韆
+	) -- agrupo los procesos de compra con brecha presupuestaria alta seg煤n la categor铆a
 		select
 		t.categoria_det,
 		t.cantidad_total,
@@ -62,12 +81,19 @@ create view incidencia_en_brecha_por_categoria as
 		top 10 * 
 	from incidencia_en_brecha_por_categoria
 	order by porcentaje_incidencia desc;
-	-- observamos que: "Reservado para GCBA" es el 醨ea con un valor de brecha porcentual mas alto, con  %12.00 de sus licitaciones con una brecha presupuestaria desproporcionada
+```
+
+![Resultado de la consulta](Imagenes/02.Exploracion.png)
 
 
--- 03. Validaci髇
+Observamos que "Reservado para GCBA" es el 谩rea con un valor de brecha porcentual mas alto, con  %12.00 de sus licitaciones con una brecha presupuestaria desproporcionada.
 
--- 縱arian los valores [metodo_adquisicion] y [metodo_adquisicion_det] dentro del mismo proceso de compra?
+
+
+### 03. Validaci贸n
+
+驴Varian los valores [metodo_adquisicion] y [metodo_adquisicion_det] dentro del mismo proceso de compra?
+```sql
 	with variantes_mismo_procdecompra as
 	(
 		select
@@ -91,18 +117,22 @@ create view incidencia_en_brecha_por_categoria as
 		count(id_proc_compra),
 		'total'
 	from proc_de_compra; 
-	-- RESPUESTA: no existen variantes en los valores de las columnas [metodo_adquisicion] y [metodo_adquisicion_det] dentro del mismo proceso de compra, se debe a que cada licitacion tiene una sola forma de adjudicarse
+```
+
+![Resultado de la consulta](Imagenes/03.Validacion.png)
+
+Observamos que no existen variantes en los valores de las columnas [metodo_adquisicion] y [metodo_adquisicion_det] dentro del mismo proceso de compra, se debe a que cada licitacion tiene una sola forma de adjudicarse
 
 
--- 04. Modelado
+### 04. Modelado
 
-/*
-(Integracion y transformacion)
-Creo mi nueva tabla de hechos, nombrada 'renglon', en donde voy a integrar todos los valores que correspondan a los renglones individuales de cada proceso de compra. En mi modelo de datos tipo estrella esta tabla 
-va a funcionar como la tabla principal.
-*/
 
--- Creo la tabla y las llaves PK y FKs correspondientes
+###### Integracion y transformaci贸n
+Creo mi nueva tabla de hechos, nombrada 'renglon', en donde voy a integrar todos los valores que correspondan a los renglones individuales de cada proceso de compra. En mi modelo de datos tipo estrella, la tabla "renglon" ser谩 la tabla de hechos.
+
+
+##### Creo la tabla, las llaves primarias (PK) y las llaves foraneas (FK)
+```sql
 	create table renglon(
 		id_renglon nvarchar(100) not null,
 		descripcion nvarchar(100) null,
@@ -121,6 +151,7 @@ va a funcionar como la tabla principal.
 		id_proc_compra nvarchar(20) null,
 		id_item nvarchar(25) null,
 		id_ent_contrat nvarchar(40) null,
+
 
 		constraint PK_renglon
 			primary key (id_renglon),
@@ -177,4 +208,6 @@ va a funcionar como la tabla principal.
 	
 	alter table renglon
 	alter column id_ent_contrat nvarchar(40) NOT NULL;
+```
 
+![Modelo estrella](Imagenes/04.Modelado.png)
