@@ -10,7 +10,7 @@ El reporte utiliza los datos previamente procesados y modelados en SQL Server, t
 
 La portada presenta el objetivo del proyecto y el período analizado, funcionando como punto de entrada al dashboard.
 
-![Portada del dashboard](Imagenes/portada.jpg)
+![Portada del dashboard](Imagenes/Portada.jpg)
 
 ---
 
@@ -70,7 +70,7 @@ El análisis combina indicadores generales con visualizaciones de distribución 
 
 # 3. Desviaciones por entidad contratante
 
-![Desviaciones por entidad](Imagenes/pag03.jpg)
+![Desviaciones por entidad](Imagenes/pag3.jpg)
 
 La tercera página profundiza el análisis desde la perspectiva de las **entidades contratantes**.
 
